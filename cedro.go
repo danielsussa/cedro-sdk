@@ -8,8 +8,9 @@ import (
 )
 
 type (
-	Symbols struct {
+	Object struct {
 		Symbols []*Symbol
+		Time    time.Time
 	}
 
 	Symbol struct {
@@ -42,12 +43,16 @@ type (
 	}
 )
 
-func Process(msg string, symbols []*Symbol) []*Symbol {
+func Process(msg string, object Object) Object {
 	msgSpl := strings.Split(msg, ":")
 	switch msgSpl[0] {
 	case "T":
 		var symbol *Symbol
-		symbols, symbol = getBySymbol(msgSpl[1], symbols)
+		object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
+		t, err := time.Parse("150405", msgSpl[2])
+		if err == nil {
+			object.Time = t
+		}
 
 		for i := 3; i < len(msgSpl); i += 2 {
 			switch msgSpl[i] {
@@ -66,7 +71,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 		switch msgSpl[2] {
 		case "U":
 			var symbol *Symbol
-			symbols, symbol = getBySymbol(msgSpl[1], symbols)
+			object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 			position := stringToInt(msgSpl[3])
 			direction := msgSpl[4]
@@ -86,7 +91,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 			}
 		case "A":
 			var symbol *Symbol
-			symbols, symbol = getBySymbol(msgSpl[1], symbols)
+			object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 			position := stringToInt(msgSpl[3])
 			direction := msgSpl[4]
@@ -108,7 +113,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 			switch msgSpl[3] {
 			case "1": // O tipo 1 indica que somente a oferta da posição indicada deve ser cancelada.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				position := stringToInt(msgSpl[3])
 				direction := msgSpl[4]
@@ -120,7 +125,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 
 			case "2": // O tipo 2 indica que todas as ofertas melhores do que a oferta indicada pela posição, inclusive ela, devem ser canceladas.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				position := stringToInt(msgSpl[3])
 				direction := msgSpl[4]
@@ -131,7 +136,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 				}
 			case "3": // O tipo 3 indica que todas as ofertas, tanto de compra quanto de venda, devem ser canceladas. Neste tipo a mensagem não vem acompanhada de direção e posição.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				symbol.BookLineBid = make([]*BookLine, 0)
 				symbol.BookLineAsk = make([]*BookLine, 0)
@@ -141,7 +146,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 		switch msgSpl[2] {
 		case "A": // process BQT ADD
 			var symbol *Symbol
-			symbols, symbol = getBySymbol(msgSpl[1], symbols)
+			object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 			position := stringToInt(msgSpl[3])
 			direction := msgSpl[4]
@@ -165,7 +170,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 			switch msgSpl[3] {
 			case "1": // O tipo 1 indica que somente a oferta da posição indicada deve ser cancelada.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				position := stringToInt(msgSpl[3])
 				direction := msgSpl[4]
@@ -177,7 +182,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 
 			case "2": // O tipo 2 indica que todas as ofertas melhores do que a oferta indicada pela posição, inclusive ela, devem ser canceladas.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				position := stringToInt(msgSpl[3])
 				direction := msgSpl[4]
@@ -188,14 +193,14 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 				}
 			case "3": // O tipo 3 indica que todas as ofertas, tanto de compra quanto de venda, devem ser canceladas. Neste tipo a mensagem não vem acompanhada de direção e posição.
 				var symbol *Symbol
-				symbols, symbol = getBySymbol(msgSpl[1], symbols)
+				object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 				symbol.BookLineBid = make([]*BookLine, 0)
 				symbol.BookLineAsk = make([]*BookLine, 0)
 			}
 		case "U": // process BQT UPDATE
 			var symbol *Symbol
-			symbols, symbol = getBySymbol(msgSpl[1], symbols)
+			object.Symbols, symbol = getBySymbol(msgSpl[1], object.Symbols)
 
 			newPosition := stringToInt(msgSpl[3])
 			oldPosition := stringToInt(msgSpl[4])
@@ -222,7 +227,7 @@ func Process(msg string, symbols []*Symbol) []*Symbol {
 		}
 	}
 
-	return symbols
+	return object
 }
 
 func getBySymbol(symbol string, list []*Symbol) ([]*Symbol, *Symbol) {
