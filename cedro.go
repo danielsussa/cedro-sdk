@@ -57,13 +57,13 @@ func Process(msg string, object Object) Object {
 		for i := 3; i < len(msgSpl); i += 2 {
 			switch msgSpl[i] {
 			case "2": // Preço do último negócio
-				price := stringToFloat(msgSpl[4])
+				price := stringToFloat(msgSpl[i+1])
 				symbol.Last = price
 			case "3": // Melhor oferta de compra
-				price := stringToFloat(msgSpl[4])
+				price := stringToFloat(msgSpl[i+1])
 				symbol.Bid = price
 			case "4": // Melhor oferta de venda
-				price := stringToFloat(msgSpl[4])
+				price := stringToFloat(msgSpl[i+1])
 				symbol.Ask = price
 			}
 		}
