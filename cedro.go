@@ -26,6 +26,7 @@ type (
 
 		AggregatedBookAsk []*AggregatedBook
 		AggregatedBookBid []*AggregatedBook
+		LastUpdate        int
 	}
 
 	AggregatedBook struct {
@@ -53,6 +54,12 @@ func Process(msg string, object Object) Object {
 		if err == nil {
 			object.Time = t
 		}
+
+		lastUpdate := stringToInt(strings.ReplaceAll(msgSpl[len(msgSpl)-1], "!", ""))
+		if symbol.LastUpdate >= lastUpdate {
+			return object
+		}
+		symbol.LastUpdate = lastUpdate
 
 		for i := 3; i < len(msgSpl); i += 2 {
 			switch msgSpl[i] {
